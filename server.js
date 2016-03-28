@@ -9,6 +9,7 @@ let morgan = require('morgan')
 let trycatch = require('trycatch')
 let wrap = require('co-express')
 let bodyParser = require('simple-bodyparser')
+let archiver = require('archiver')
 let mime = require('mime')
 let cwd = process.cwd()
 
@@ -23,14 +24,33 @@ function* main(){
         })
     })
 	app.listen(8000)
+	app.get('*/', wrap(sendHeaders), wrap(getFolder))
 	app.get('*', wrap(sendHeaders), wrap(read))
 	app.put('*', wrap(write))
 	app.post('*', wrap(update))
 	app.delete('*', wrap(del))
 }
 
+function* getFolder(req, res){
+	console.log('Fetching folder info...')
+	let filePath = path.join(cwd, req.url)
+	console.log(filePath)
+	try{
+		let stat = yield fs.stat(filePath)
+		console.log('finish stat')
+		console.log(stat)
+		let files = yield fs.readdir(filePath)
+		console.log(files.toString())
+		console.log('files to json: ' + JSON.stringify(files))
+		res.end(JSON.stringify(files))
+	}catch(e){//folder not exist
+		res.status(405).send('Folder not exist. \n')
+	}
+}
+
+
 function* del(req, res){
-	let filePath = path.join(cwd, 'files', req.url)
+	let filePath = path.join(cwd, req.url)
 	try{
 		let stat = yield fs.stat(filePath)
 		if(stat){
@@ -45,7 +65,7 @@ function* del(req, res){
 
 
 function* update(req, res){
-	let filePath = path.join(cwd, 'files', req.url)
+	let filePath = path.join(cwd, req.url)
 	try{
 		let stat = yield fs.stat(filePath)
 		if(stat){
@@ -68,7 +88,7 @@ function* update(req, res){
 
 
 function* write(req, res){
-	let filePath = path.join(cwd, 'files', req.url)
+	let filePath = path.join(cwd, req.url)
 	try{
 		let stat = yield fs.stat(filePath)
 		if(stat){
@@ -90,7 +110,7 @@ function* write(req, res){
 
 function* read(req, res) {
 	console.log('reading...')
-    let filePath = path.join(cwd, 'files', req.url)
+    let filePath = path.join(cwd, req.url)
     console.log('filePath is ' + filePath)
     let options = {
 		  flags: 'r',
@@ -100,19 +120,21 @@ function* read(req, res) {
     let readStream = originalFs.createReadStream(filePath, options)
     console.log(readStream.on)
 	readStream.pipe(res)
-	// res.end()
 }
 
 function* sendHeaders(req, res, next) {
-    // send headers logic
     console.log('sending headers')
-    let filePath = path.join(cwd, 'files', req.url)
-    let stats = yield fs.stat(filePath)
-    let data = yield fs.readFile(filePath)
-    res.set('Content-Type',mime.lookup(filePath))
-    // res.set('Content-Length',stats["size"].toString())
-    res.set('Content-Length',data.length)
-    next()
+
+    let filePath = path.join(cwd, req.url)
+    try{
+	    let stats = yield fs.stat(filePath)
+	    res.set('Content-Length',stats["size"].toString())
+	    res.set('Content-Type',mime.lookup(filePath))
+	    // res.set('Content-Length',data.length)
+	    next()
+	}catch(e){
+		res.status(405).send('Invalid Path \n')
+	}
 }
 
 module.exports = main
