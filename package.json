@@ -1,21 +1,29 @@
 {
-  "name": "clis",
+  "name": "nodejs_dropbox",
   "version": "1.0.0",
-  "description": "A collection of CLI utilities",
+  "description": "dropbox demo",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "nodemon server.js"
   },
   "repository": {
     "type": "git",
-    "url": "git://github.com/CrabDude/nodejs-clis-starter.git"
+    "url": "git://github.com/JohnnyHuo/nodejs_dropbox_demo.git"
   },
-  "author": "Adam Crabtree",
+  "author": "Johnny Huo",
   "license": "MIT",
   "dependencies": {
     "co": "^4.6.0",
     "safeguards": "0.0.3",
     "songbird": "^1.0.2",
     "trycatch": "^1.5.21"
+  },
+  "bugs": {
+    "url": "https://github.com/JohnnyHuo/nodejs_dropbox_demo/issues"
+  },
+  "homepage": "https://github.com/JohnnyHuo/nodejs_dropbox_demo#readme",
+  "devDependencies": {
+    "gulp-rename": "^1.2.2"
   }
 }
