@@ -128,7 +128,7 @@ function* sendHeaders(req, res, next) {
     let filePath = path.join(cwd, req.url)
     try{
 	    let stats = yield fs.stat(filePath)
-	    res.set('Content-Length',stats["size"].toString())
+	    // res.set('Content-Length',stats["size"].toString())
 	    res.set('Content-Type',mime.lookup(filePath))
 	    // res.set('Content-Length',data.length)
 	    next()
