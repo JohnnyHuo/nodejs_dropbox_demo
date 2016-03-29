@@ -25,10 +25,25 @@ function* main(){
     })
 	app.listen(8000)
 	app.get('*/', wrap(sendHeaders), wrap(getFolder))
+	app.put('*/', wrap(createFolder))
 	app.get('*', wrap(sendHeaders), wrap(read))
 	app.put('*', wrap(write))
 	app.post('*', wrap(update))
 	app.delete('*', wrap(del))
+}
+
+function* createFolder(req, res){
+	let filePath = path.join(cwd, req.url)
+	try{
+		console.log('creating folder...')
+		console.log(filePath)
+		let stat = yield fs.stat(filePath)
+		res.status(405).send('Folder already exist... \n')
+	}catch (e){//folder not exist, create new
+		console.log('folder not exist...')
+		yield fs.mkdir(filePath)
+		res.end()
+	}
 }
 
 function* getFolder(req, res){
