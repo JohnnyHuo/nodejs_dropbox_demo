@@ -12,7 +12,8 @@ let bodyParser = require('simple-bodyparser')
 let archiver = require('archiver')
 let mime = require('mime')
 let rimraf = require('rimraf')
-let cwd = process.cwd()
+let argv = require('yargs').argv
+let cwd = argv.dir || process.cwd()
 
 function* main(){
 	let app = express()
@@ -25,10 +26,10 @@ function* main(){
         })
     })
 	app.listen(8000)
-	app.get('*/', wrap(sendHeaders), wrap(getFolder))
-	app.put('*/', wrap(createFolder))
-	app.post('*/', wrap(updateFolder))
-	app.delete('*/', wrap(delFolder))
+	app.get('*//', wrap(sendHeaders), wrap(getFolder))
+	app.put('*//', wrap(createFolder))
+	app.post('*//', wrap(updateFolder))
+	app.delete('*//', wrap(delFolder))
 	app.get('*', wrap(sendHeaders), wrap(read))
 	app.put('*', wrap(write))
 	app.post('*', wrap(update))
@@ -39,11 +40,20 @@ function* delFolder(req, res){
 	let filePath = path.join(cwd, req.url)
 	console.log('deleting folder...' + filePath)
 	try{
-		let stat = fs.stat(filePath)
-		rimraf(filePath)
+		let stat = yield fs.stat(filePath)
+		console.log(stat)
+		if(stat){
+			console.log('Located folder...')
+			rimraf(filePath, function(error){
+				console.log('Error: ', error)
+			})
+			res.end('Deleted folder! \n')
+		}
 	}catch(e){//invalid path
+		console.log(e.stack)
 		res.status(405).send('Invalid Path! \n')
 	}
+	// rimraf(path.join(ROOT_DIR, filePath))
 }
 
 function* updateFolder(req, res){
@@ -159,15 +169,25 @@ function* read(req, res) {
 
 function* sendHeaders(req, res, next) {
     console.log('sending headers')
-
     let filePath = path.join(cwd, req.url)
+    console.log(filePath)
     try{
 	    let stats = yield fs.stat(filePath)
+	    console.log(stats)
+	    // if(stats.isDirectory()){
+	    // 	console.log('Sending header for directory...')
+	    // 	let files = yield fs.readdir(filePath)
+	    // 	res.body = JSON.stringify(files)
+	    // 	res.setHeader('Content-Length', res.body.length)
+	    // 	res.setHeader('Content-Type', 'application/json')
+	    // 	return
+	    // }
 	    // res.set('Content-Length',stats["size"].toString())
 	    res.set('Content-Type',mime.lookup(filePath))
 	    // res.set('Content-Length',data.length)
 	    next()
 	}catch(e){
+		console.log(e.stack)
 		res.status(405).send('Invalid Path \n')
 	}
 }
