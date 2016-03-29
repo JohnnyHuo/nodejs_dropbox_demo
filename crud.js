@@ -26,7 +26,8 @@ function* main(){
         })
     })
 	app.listen(8000)
-	app.get('*//', wrap(sendHeaders), wrap(getFolder))
+	app.get('*//', wrap(getFolder))
+	// app.get('*//', wrap(sendHeaders), wrap(getFolder))
 	app.put('*//', wrap(createFolder))
 	app.post('*//', wrap(updateFolder))
 	app.delete('*//', wrap(delFolder))
@@ -86,13 +87,15 @@ function* getFolder(req, res){
 		console.log(stat)
 		let files = yield fs.readdir(filePath)
 		if(req.headers['accept'] === "application/x-gtar"){
+			let dirPath = path.join(__dirname, req.params[0])
 			console.log('Archiving...')
 			let archive = archiver('zip')
 			res.attachment('files.zip')
 			archive.pipe(res)
-			archive.bulk([
-				{expand: true, cwd: filePath, src: ['**']}
-			])
+			// archive.bulk([
+			// 	{expand: true, cwd: filePath, src: ['**']}
+			// ])
+			archive.directory(dirPath)
 			archive.finalize()
 			console.log('AFTER finalize')
 		}else{

@@ -15,7 +15,9 @@
   "license": "MIT",
   "dependencies": {
     "archiver": "^0.21.0",
+    "chokidar": "^1.4.3",
     "co": "^4.6.0",
+    "json-over-tcp": "^0.3.2",
     "safeguards": "0.0.3",
     "songbird": "^1.0.2",
     "trycatch": "^1.5.21"

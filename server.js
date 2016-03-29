@@ -1,12 +1,81 @@
-let net = require('net')
-let JsonSocket = require('json-socket')
-let port = 8001
-let server = net.createServer()
-server.listen(port)
-server.on('connection', function(socket) {
-    socket = new JsonSocket(socket) //Now we've decorated the net.Socket to be a JsonSocket
-    socket.on('message', function(message) {
-        let result = message.a + message.b
-        socket.sendEndMessage({result: result})
-    })
+//server monitor the file system, if any change, send tcp request to client, and client will send http request to crud.js to sync the file status
+let fs = require('fs')
+let jot = require('json-over-tcp')
+let co = require('co')
+let chokidar = require('chokidar')
+let path = require('path')
+let cwd = process.cwd()
+console.log('TCP server cwd: ' + cwd)
+const PORT = 8001
+
+let server = jot.createServer(PORT, );
+server.on('listening', startMonitor);
+server.on('connection', newConnectionHandler);
+
+
+function startMonitor(){
+	let watcher = chokidar.watch(cwd, {ignored: /[\/\\]\./, persistent: true})
+	// Something to use when events are received.
+	 let log = console.log.bind(console)
+	// Add event listeners.
+	watcher.on('add', (path) => { 
+								let data = {"action": "write", "path": path, "type": "file" }
+								socket.write(data)})
+    watcher.on('addDir', (path) => { 
+       							let data = {"action": "write", "path": path, "type": "dir" }
+       							socket.write(data)})
+    watcher.on('change', (path) => {
+       							let data = {"action": "write", "path": path, "type": "file"}
+       							socket.write(data)})
+    watcher.on('unlink', (path) => {
+       							let data = {"action": "delete", "path": path,"type": "file" }
+       							socket.write(data)})
+    watcher.on('unlinkDir', (path) => {
+       							let data = {"action": "delete", "path": path, "type": "dir"}
+       							socket.write(data)})
+
+}
+function newConnectionHandler(socket){
+	console.log('server get connection...')
+  let watcher = chokidar.watch(cwd, {ignored: /[\/\\]\./, persistent: true})
+	// Something to use when events are received.
+	 let log = console.log.bind(console)
+	// Add event listeners.
+	watcher.on('add', (path) => { 
+								let data = {"action": "write", "path": path, "type": "file" }
+								socket.write(data)})
+    watcher.on('addDir', (path) => { 
+       							let data = {"action": "write", "path": path, "type": "dir" }
+       							socket.write(data)})
+    watcher.on('change', (path) => {
+       							let data = {"action": "write", "path": path, "type": "file"}
+       							socket.write(data)})
+    watcher.on('unlink', (path) => {
+       							let data = {"action": "delete", "path": path,"type": "file" }
+       							socket.write(data)})
+    watcher.on('unlinkDir', (path) => {
+       							let data = {"action": "delete", "path": path, "type": "dir"}
+       							socket.write(data)})
+}
+
+// Creates one connection to the server when the server starts listening
+// function createConnection(){
+//   // Start a connection to the server
+//   let socket = jot.connect(PORT, function(){
+//     console.log('tcp connected...')
+//   })
+// }
+
+let ops = co.wrap(function* (data) {
+  let filePath = path.join(sourcePath, 'client', data.path)
+  let destPath = path.join(sourcePath, 'server', data.path)
+  if(data.action === 'write') {
+    let rs = fs.createReadStream(srcPath)
+    let ws = fs.createWriteStream(destPath)
+    rs.pipe(ws)
+  } else if('delete' == data.action) {
+    yield fs.unlink(destPath)
+  }
 })
+
+server.listen(PORT);
