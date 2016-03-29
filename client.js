@@ -21,7 +21,6 @@ let client = jot.connect(PORT, '127.0.0.1', function() {
 })
 
 client.on('data', function(data) {
-  console.log('Received: ' + data)
   sendHttpRequest(data)
 })
 
@@ -31,17 +30,31 @@ function sendHttpRequest(data){
   console.log('url : ', url)
   if(data.action === 'PUT'){
     if(data.type === 'file'){
-     // unirest.get(url).end(function(res){
-     //  if(res.error){
-     //    console.log('GET error', res.error)
-     //  }else{
-     //      console.log('GET response', res.body)
-     //      console.log('Use body to create client side file')
-     //      newUrl = 'http://127.0.0.1/8000' + defaultPath
-     //      console.log('new url', 'http://127.0.0.1/8000' + defaultPath)
-     //      unirest.put(newUrl).body(res.body).end()
-     //    }
-     //  }) 
+      let options = {
+          host: '127.0.0.1',
+          path: data.path,
+          //since we are listening on a custom port, we need to specify it by hand
+          port: '8000',
+          //This is what changes the request to a POST request
+          method: 'GET'
+        }
+      let req = http.request(options, function(response){
+        console.log('response body .....', response.body)
+        console.log('Defaultpath ', defaultPath)
+        let newOp = {
+          host: '127.0.0.1',
+          path: defaultPath,
+          //since we are listening on a custom port, we need to specify it by hand
+          port: '8000',
+          //This is what changes the request to a POST request
+          method: 'PUT',
+          body: response.body
+        }
+        http.request(options, function(response){
+          console.log('put request sent')
+        })
+      })
+
     }else{//folder
       let folderUrl = 'http://127.0.0.1/8000' + data.path.replace('server', 'client')
       unirest.put()
