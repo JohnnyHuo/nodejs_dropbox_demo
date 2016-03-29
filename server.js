@@ -11,6 +11,7 @@ let wrap = require('co-express')
 let bodyParser = require('simple-bodyparser')
 let archiver = require('archiver')
 let mime = require('mime')
+let rimraf = require('rimraf')
 let cwd = process.cwd()
 
 function* main(){
@@ -27,14 +28,26 @@ function* main(){
 	app.get('*/', wrap(sendHeaders), wrap(getFolder))
 	app.put('*/', wrap(createFolder))
 	app.post('*/', wrap(updateFolder))
+	app.delete('*/', wrap(delFolder))
 	app.get('*', wrap(sendHeaders), wrap(read))
 	app.put('*', wrap(write))
 	app.post('*', wrap(update))
 	app.delete('*', wrap(del))
 }
 
+function* delFolder(req, res){
+	let filePath = path.join(cwd, req.url)
+	console.log('deleting folder...' + filePath)
+	try{
+		let stat = fs.stat(filePath)
+		rimraf(filePath)
+	}catch(e){//invalid path
+		res.status(405).send('Invalid Path! \n')
+	}
+}
+
 function* updateFolder(req, res){
-	console.log('updating folder')
+	console.log('updating folder...')
 	res.status(405).send('Method NOT Allowed! \n')
 }
 
