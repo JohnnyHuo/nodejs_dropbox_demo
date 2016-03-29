@@ -26,10 +26,16 @@ function* main(){
 	app.listen(8000)
 	app.get('*/', wrap(sendHeaders), wrap(getFolder))
 	app.put('*/', wrap(createFolder))
+	app.post('*/', wrap(updateFolder))
 	app.get('*', wrap(sendHeaders), wrap(read))
 	app.put('*', wrap(write))
 	app.post('*', wrap(update))
 	app.delete('*', wrap(del))
+}
+
+function* updateFolder(req, res){
+	console.log('updating folder')
+	res.status(405).send('Method NOT Allowed! \n')
 }
 
 function* createFolder(req, res){
@@ -42,7 +48,7 @@ function* createFolder(req, res){
 	}catch (e){//folder not exist, create new
 		console.log('folder not exist...')
 		yield fs.mkdir(filePath)
-		res.end()
+		res.end('Folder created \n')
 	}
 }
 
@@ -80,6 +86,7 @@ function* del(req, res){
 
 
 function* update(req, res){
+	console.log('updating...')
 	let filePath = path.join(cwd, req.url)
 	try{
 		let stat = yield fs.stat(filePath)
