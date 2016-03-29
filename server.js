@@ -5,74 +5,49 @@ let co = require('co')
 let chokidar = require('chokidar')
 let path = require('path')
 let cwd = process.cwd()
+let argv = require('yargs').argv
+const defaultPath = cwd+'/server/'
+
 console.log('TCP server cwd: ' + cwd)
 const PORT = 8001
+let listenPath = cwd || argv.dir
 
 let server = jot.createServer(PORT);
 // server.on('listening', startMonitor);
 server.on('connection', newConnectionHandler);
 
 
-// function startMonitor(){
-// 	let watcher = chokidar.watch(cwd, {ignored: /[\/\\]\./, persistent: true})
-// 	// Something to use when events are received.
-// 	 let log = console.log.bind(console)
-// 	// Add event listeners.
-// 	watcher.on('add', (path) => { 
-// 								let data = {"action": "write", "path": path, "type": "file" }
-// 								socket.write(data)})
-//     watcher.on('addDir', (path) => { 
-//        							let data = {"action": "write", "path": path, "type": "dir" }
-//        							socket.write(data)})
-//     watcher.on('change', (path) => {
-//        							let data = {"action": "write", "path": path, "type": "file"}
-//        							socket.write(data)})
-//     watcher.on('unlink', (path) => {
-//        							let data = {"action": "delete", "path": path,"type": "file" }
-//        							socket.write(data)})
-//     watcher.on('unlinkDir', (path) => {
-//        							let data = {"action": "delete", "path": path, "type": "dir"}
-//        							socket.write(data)})
-
-// }
 function newConnectionHandler(socket){
 	console.log('tcp server get connection...')
 
-	let watcher = chokidar.watch(cwd+'/server/', {ignored: /[\/\\]\./, persistent: true})
+	let watcher = chokidar.watch(defaultPath, {ignored: /[\/\\]\./, persistent: true})
 
 	let log = console.log.bind(console)
+	
+	// //firstly sync client folder and server folder
+	// let data = {"action" : "GET", "path" : path}
+	// socket.write(data)
 
+	//listen on changes
 	watcher.on('add', (path) => { 
-								let data = {"action": "write", "path": path, "type": "file" }
+								let data = {"action": "PUT", "path": path, "type": "file" }
 								socket.write(data)})
 
     watcher.on('addDir', (path) => { 
-       							let data = {"action": "write", "path": path, "type": "dir" }
+       							let data = {"action": "PUT", "path": path, "type": "dir" }
        							socket.write(data)})
 
     watcher.on('change', (path) => {
-       							let data = {"action": "write", "path": path, "type": "file"}
+       							let data = {"action": "POST", "path": path, "type": "file"}
        							socket.write(data)})
 
     watcher.on('unlink', (path) => {
-       							let data = {"action": "delete", "path": path,"type": "file" }
+       							let data = {"action": "DELETE", "path": path,"type": "file" }
        							socket.write(data)})
 
     watcher.on('unlinkDir', (path) => {
-       							let data = {"action": "delete", "path": path, "type": "dir"}
+       							let data = {"action": "DELETE", "path": path, "type": "dir"}
        							socket.write(data)})
 }
-
-let ops = co.wrap(function* (data) {
-  let filePath = path.join(sourcePath, 'client', data.path)
-  let destPath = path.join(sourcePath, 'server', data.path)
-  if(data.action === 'write') {
-    let rs = fs.createReadStream(srcPath)
-    let ws = fs.createWriteStream(destPath)
-    rs.pipe(ws)
-  } else if('delete' == data.action) {
-    yield fs.unlink(destPath)
-  }
-})
 
 server.listen(PORT);
