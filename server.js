@@ -174,17 +174,17 @@ function* sendHeaders(req, res, next) {
     try{
 	    let stats = yield fs.stat(filePath)
 	    console.log(stats)
-	    // if(stats.isDirectory()){
-	    // 	console.log('Sending header for directory...')
-	    // 	let files = yield fs.readdir(filePath)
-	    // 	res.body = JSON.stringify(files)
-	    // 	res.setHeader('Content-Length', res.body.length)
-	    // 	res.setHeader('Content-Type', 'application/json')
-	    // 	return
-	    // }
-	    // res.set('Content-Length',stats["size"].toString())
-	    res.set('Content-Type',mime.lookup(filePath))
-	    // res.set('Content-Length',data.length)
+	    if(stats.isDirectory()){
+	    	console.log('Sending header for directory...')
+	    	let files = yield fs.readdir(filePath)
+	    	console.log(files.toString())
+	    	res.body = JSON.stringify(files)
+	    	res.setHeader('Content-Length', res.body.length)
+	    	res.setHeader('Content-Type', 'application/json')
+	    }else{
+		    res.set('Content-Length',stats["size"].toString())
+		    res.set('Content-Type',mime.lookup(filePath))
+	    }
 	    next()
 	}catch(e){
 		console.log(e.stack)
